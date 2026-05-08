@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시간의 뺄셈 - 받아내림 없는 빼기</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff8e7;
+    --bg-2: #fff1d0;
+    --ink: #2d3142;
+    --line: #4a4e69;
+    --hour: #ff6b6b;
+    --hour-soft: #ffd6d6;
+    --min: #4ecdc4;
+    --min-soft: #d4f5f2;
+    --sec: #ffa94d;
+    --sec-soft: #ffe4c4;
+    --accent: #ffd23f;
+    --paper: #ffffff;
+    --shadow: 0 4px 0 rgba(45,49,66,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Gaegu', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, var(--bg-2) 0%, transparent 30%),
+      radial-gradient(circle at 90% 80%, var(--bg-2) 0%, transparent 30%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2.4rem;
+    color: var(--ink);
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1rem;
+    color: var(--line);
+    margin-top: 4px;
+  }
+
+  /* 입력 영역 */
+  .setup {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .setup-title {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .setup-title::before {
+    content: "✏️";
+    font-size: 2rem;
+  }
+  .input-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.7rem;
+  }
+  .input-row .label {
+    width: 160px;
+    font-weight: 700;
+  }
+  .input-row.minuend .label { color: var(--hour); }
+  .input-row.subtrahend .label { color: var(--line); }
+  input[type="number"] {
+    width: 100px;
+    padding: 10px 12px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.8rem;
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    text-align: center;
+    background: var(--bg);
+  }
+  input[type="number"]:focus {
+    outline: none;
+    background: var(--accent);
+  }
+  .unit { font-weight: 700; font-size: 1.6rem; }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.3rem;
+    padding: 12px 24px;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    cursor: pointer;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(45,49,66,0.2); }
+  button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(45,49,66,0.15); }
+  .btn-start { background: var(--accent); }
+  .btn-reset { background: var(--hour-soft); }
+  .btn-auto { background: var(--min-soft); }
+  .btn-random { background: var(--sec-soft); }
+
+  .err {
+    color: #d62828;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2rem;
+    margin-top: 10px;
+    min-height: 1.4em;
+  }
+
+  /* 작업 영역 */
+  .workspace {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .equation {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+  .col-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.4rem;
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .col-label.hour { background: var(--hour-soft); color: var(--hour); }
+  .col-label.min { background: var(--min-soft); color: var(--min); }
+  .col-label.sec { background: var(--sec-soft); color: var(--sec); }
+  .col-label.empty { visibility: hidden; }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.6rem;
+    background: var(--bg);
+    border-radius: 12px;
+    border: 2px dashed var(--line);
+  }
+  .cell {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 12px;
+    border: 2px solid var(--line);
+    min-height: 200px;
+    position: relative;
+  }
+  .cell-num {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .cell.hour .cell-num { color: var(--hour); }
+  .cell.min .cell-num { color: var(--min); }
+  .cell.sec .cell-num { color: var(--sec); }
+
+  /* 시(시계) 시각화 */
+  .clock-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .clock {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 4px solid var(--ink);
+    background: var(--paper);
+    position: relative;
+    box-shadow: inset 0 0 0 4px var(--bg);
+  }
+  .clock .num {
+    position: absolute;
+    font-family: 'Jua', sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink);
+    transform: translate(-50%, -50%);
+  }
+  .hand {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    transform-origin: bottom center;
+    background: var(--hour);
+    border-radius: 4px;
+  }
+  .hand.hour-h {
+    width: 6px;
+    height: 38px;
+    margin-left: -3px;
+    transition: transform 0.5s ease;
+  }
+  .hand.minute-h {
+    width: 4px;
+    height: 52px;
+    margin-left: -2px;
+    background: var(--line);
+    opacity: 0.4;
+  }
+  .clock-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    background: var(--ink);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* 묶음(분/초) 시각화 */
+  .bundles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: flex-start;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .bundle {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, 16px);
+    grid-template-rows: 16px;
+    gap: 4px;
+  }
+  .bundle.partial {
+    border-style: dashed;
+    background: rgba(255,255,255,0.5);
+  }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s;
+    cursor: default;
+    touch-action: none;
+  }
+  .cell.min .dot { background: var(--min); }
+  .cell.sec .dot { background: var(--sec); }
+  .dot.removable {
+    cursor: pointer;
+  }
+  .dot.removable:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 0 5px rgba(45,49,66,0.3);
+  }
+  .dot.removed {
+    background: transparent !important;
+    border: 2px dashed rgba(45,49,66,0.3);
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  /* 시(시간) 시각화: 작은 시계들 */
+  .hour-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .hour-tick {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--hour);
+    border: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Jua', sans-serif;
+    color: white;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+  }
+  .hour-tick.removable {
+    cursor: pointer;
+  }
+  .hour-tick.removable:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 0 5px rgba(45,49,66,0.3);
+  }
+  .hour-tick.removed {
+    background: transparent;
+    color: rgba(45,49,66,0.3);
+    border: 2px dashed rgba(45,49,66,0.3);
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+
+  /* 결과 / 메시지 */
+  .message {
+    background: var(--bg);
+    border: 2px dashed var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.15rem;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .message.success {
+    background: var(--accent);
+    animation: bounce 0.5s;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .answer-display {
+    display: none;
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--accent);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.6rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .answer-display.show { display: block; animation: bounce 0.6s; }
+
+  .legend {
+    font-family: 'Gaegu', sans-serif;
+    font-size: 0.95rem;
+    color: var(--line);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* 모바일 대응 */
+  @media (max-width: 720px) {
+    .equation {
+      grid-template-columns: 60px 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .cell { padding: 8px; min-height: 160px; }
+    .cell-num { font-size: 1.4rem; }
+    .col-label { font-size: 1rem; }
+    .row-label { font-size: 1.2rem; }
+    .clock { width: 100px; height: 100px; }
+    .hand.hour-h { height: 28px; }
+    .hand.minute-h { height: 38px; }
+    .bundle {
+      grid-template-columns: repeat(5, 12px);
+      grid-template-rows: 12px;
+      gap: 3px;
+      padding: 4px;
+    }
+    .dot { width: 12px; height: 12px; }
+    .hour-tick { width: 22px; height: 22px; font-size: 0.75rem; }
+    h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⏰ 시간의 뺄셈 ⏰</h1>
+    <div class="subtitle">받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)</div>
+  </header>
+
+  <!-- 문제 입력 -->
+  <section class="setup">
+    <div class="setup-title">문제 만들기</div>
+    <div class="input-row minuend">
+      <span class="label">빼지는 수</span>
+      <input type="number" id="m-h" min="1" max="12" value="8"><span class="unit">시</span>
+      <input type="number" id="m-m" min="0" max="59" value="45"><span class="unit">분</span>
+      <input type="number" id="m-s" min="0" max="59" value="30"><span class="unit">초</span>
+    </div>
+    <div class="input-row subtrahend">
+      <span class="label">빼는 수 −</span>
+      <input type="number" id="s-h" min="0" max="12" value="3"><span class="unit">시</span>
+      <input type="number" id="s-m" min="0" max="59" value="20"><span class="unit">분</span>
+      <input type="number" id="s-s" min="0" max="59" value="15"><span class="unit">초</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-start" onclick="startProblem()">🎯 문제 시작!</button>
+      <button class="btn-random" onclick="randomProblem()">🎲 랜덤 문제</button>
+      <button class="btn-auto" onclick="autoSolve()">✨ 자동으로 풀기</button>
+      <button class="btn-reset" onclick="resetProblem()">🔄 처음으로</button>
+    </div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <!-- 작업 영역 -->
+  <section class="workspace">
+    <div class="equation">
+      <!-- 헤더 -->
+      <div class="col-label empty"></div>
+      <div class="col-label hour">시</div>
+      <div class="col-label min">분</div>
+      <div class="col-label sec">초</div>
+
+      <!-- 빼지는 수 -->
+      <div class="row-label">빼지는<br>수</div>
+      <div class="cell hour" id="cell-m-h">
+        <div class="cell-num" id="num-m-h">0</div>
+        <div class="clock-wrap">
+          <div class="clock" id="clock-m">
+            <div class="clock-center"></div>
+          </div>
+        </div>
+        <div class="hour-marks" id="ticks-m-h"></div>
+      </div>
+      <div class="cell min" id="cell-m-m">
+        <div class="cell-num" id="num-m-m">0</div>
+        <div class="bundles" id="bundles-m-m"></div>
+      </div>
+      <div class="cell sec" id="cell-m-s">
+        <div class="cell-num" id="num-m-s">0</div>
+        <div class="bundles" id="bundles-m-s"></div>
+      </div>
+
+      <!-- 빼는 수 -->
+      <div class="row-label">빼는<br>수 −</div>
+      <div class="cell hour">
+        <div class="cell-num" id="num-s-h">0</div>
+        <div class="legend">이만큼<br>지워요!</div>
+      </div>
+      <div class="cell min">
+        <div class="cell-num" id="num-s-m">0</div>
+        <div class="legend">이만큼<br>지워요!</div>
+      </div>
+      <div class="cell sec">
+        <div class="cell-num" id="num-s-s">0</div>
+        <div class="legend">이만큼<br>지워요!</div>
+      </div>
+    </div>
+
+    <div class="message" id="message">
+      문제를 입력하고 <b>"문제 시작!"</b> 버튼을 눌러보세요 😊
+    </div>
+
+    <div class="answer-display" id="answer">
+      🎉 정답: <span id="answer-text"></span>
+    </div>
+  </section>
+</div>
+
+<script>
+// ===== 상태 =====
+const state = {
+  minuend: { h: 0, m: 0, s: 0 },
+  subtrahend: { h: 0, m: 0, s: 0 },
+  remaining: { h: 0, m: 0, s: 0 },     // 남은 점/시계 개수
+  toRemove: { h: 0, m: 0, s: 0 },      // 더 지워야 하는 개수
+  // 각 점이 지워졌는지 추적 (true=지워짐). 인덱스 0..(total-1)
+  dots: { h: [], m: [], s: [] },
+  active: false,
+  // 드래그 상태
+  dragging: false,
+  dragKind: null,
+};
+
+// ===== 딸깍 소리 (Web Audio API) =====
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { audioCtx = null; }
+  }
+  // 사용자 제스처 후 suspended 상태일 수 있어서 resume
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playClick() {
+  ensureAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  // 짧은 "딸깍" 소리: 두 톤을 짧게 겹쳐서
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(880, now);
+  o.frequency.exponentialRampToValueAtTime(440, now + 0.06);
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.25, now + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(now);
+  o.stop(now + 0.1);
+}
+function playSuccess() {
+  ensureAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  // 도-미-솔 짧은 멜로디
+  [523.25, 659.25, 783.99].forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(freq, now + i * 0.12);
+    g.gain.setValueAtTime(0.0001, now + i * 0.12);
+    g.gain.exponentialRampToValueAtTime(0.2, now + i * 0.12 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.18);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(now + i * 0.12);
+    o.stop(now + i * 0.12 + 0.2);
+  });
+}
+
+// ===== 유틸 =====
+function $(id) { return document.getElementById(id); }
+function setText(id, v) { $(id).textContent = v; }
+function setMessage(text, success = false) {
+  const m = $('message');
+  m.innerHTML = text;
+  m.classList.toggle('success', success);
+}
+
+// ===== 시계 시각판 그리기 =====
+function drawClockFace() {
+  const clock = $('clock-m');
+  // 기존 숫자/바늘 제거
+  clock.querySelectorAll('.num, .hand').forEach(e => e.remove());
+  // 12개의 숫자 배치
+  const radius = 56;
+  for (let i = 1; i <= 12; i++) {
+    const angle = (i / 12) * 2 * Math.PI - Math.PI / 2;
+    const x = 70 + radius * Math.cos(angle);
+    const y = 70 + radius * Math.sin(angle);
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = i;
+    num.style.left = x + 'px';
+    num.style.top = y + 'px';
+    clock.appendChild(num);
+  }
+  // 분침(고정 12시 방향), 시침(시간에 따라)
+  const minHand = document.createElement('div');
+  minHand.className = 'hand minute-h';
+  clock.appendChild(minHand);
+
+  const hourHand = document.createElement('div');
+  hourHand.className = 'hand hour-h';
+  hourHand.id = 'hour-hand';
+  clock.appendChild(hourHand);
+}
+
+function setHourHand(hour) {
+  const hand = document.getElementById('hour-hand');
+  if (!hand) return;
+  // hour은 1~12, 12시 위쪽이 0도
+  const h = hour % 12;
+  const angle = (h / 12) * 360;
+  hand.style.transform = `rotate(${angle}deg)`;
+}
+
+// ===== 시 표시(작은 동그라미) =====
+function renderHourTicks() {
+  const cont = $('ticks-m-h');
+  cont.innerHTML = '';
+  const total = state.minuend.h;
+  for (let i = 0; i < total; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'hour-tick';
+    tick.textContent = i + 1;
+    if (state.dots.h[i]) {
+      tick.classList.add('removed');
+    } else if (state.toRemove.h > 0) {
+      tick.classList.add('removable');
+      tick.dataset.kind = 'h';
+      tick.dataset.index = i;
+      tick.addEventListener('click', () => removeAt('h', i));
+    }
+    cont.appendChild(tick);
+  }
+}
+
+// ===== 분/초 묶음(5개씩) 그리기 =====
+function renderBundles(kind) {
+  // kind: 'm' 또는 's'
+  const containerId = kind === 'm' ? 'bundles-m-m' : 'bundles-m-s';
+  const cont = $(containerId);
+  cont.innerHTML = '';
+
+  const total = kind === 'm' ? state.minuend.m : state.minuend.s;
+  const fullBundles = Math.floor(total / 5);
+  const leftover = total % 5;
+
+  let drawn = 0; // 0-indexed 다음 점은 drawn번
+  for (let b = 0; b < fullBundles; b++) {
+    const bundle = document.createElement('div');
+    bundle.className = 'bundle';
+    for (let i = 0; i < 5; i++) {
+      const dot = makeDot(kind, drawn);
+      bundle.appendChild(dot);
+      drawn++;
+    }
+    cont.appendChild(bundle);
+  }
+  if (leftover > 0) {
+    const bundle = document.createElement('div');
+    bundle.className = 'bundle partial';
+    for (let i = 0; i < leftover; i++) {
+      const dot = makeDot(kind, drawn);
+      bundle.appendChild(dot);
+      drawn++;
+    }
+    cont.appendChild(bundle);
+  }
+}
+
+function makeDot(kind, index) {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  dot.dataset.kind = kind;
+  dot.dataset.index = index;
+  if (state.dots[kind][index]) {
+    dot.classList.add('removed');
+  } else {
+    // 지울 게 남아있을 때만 클릭 가능 (위치 무관)
+    if ((kind === 'm' && state.toRemove.m > 0) ||
+        (kind === 's' && state.toRemove.s > 0)) {
+      dot.classList.add('removable');
+    }
+    // 드래그/클릭 이벤트는 항상 등록 (드래그 중에 진입하면 지우기 위해)
+    dot.addEventListener('pointerdown', onDotPointerDown);
+    dot.addEventListener('pointerenter', onDotPointerEnter);
+  }
+  return dot;
+}
+
+// ===== 점 지우기 (인덱스 기반) =====
+function removeAt(kind, index) {
+  if (!state.active) return;
+  if (state.dots[kind][index]) return; // 이미 지워짐
+  if (state.toRemove[kind] <= 0) return; // 더 지울 게 없음
+  playClick();
+  state.dots[kind][index] = true;
+  state.remaining[kind] -= 1;
+  state.toRemove[kind] -= 1;
+  refresh();
+  checkDone();
+}
+
+// ===== 드래그/클릭 이벤트 (분, 초) =====
+function onDotPointerDown(e) {
+  if (!state.active) return;
+  e.preventDefault();
+  const kind = e.currentTarget.dataset.kind;
+  const idx = parseInt(e.currentTarget.dataset.index, 10);
+  state.dragging = true;
+  state.dragKind = kind;
+  // 포인터 캡처해서 화면 밖으로 나가도 up 이벤트를 받게
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+  removeAt(kind, idx);
+}
+function onDotPointerEnter(e) {
+  if (!state.dragging) return;
+  if (!state.active) return;
+  const kind = e.currentTarget.dataset.kind;
+  if (kind !== state.dragKind) return; // 다른 종류로 넘어가지 않음
+  const idx = parseInt(e.currentTarget.dataset.index, 10);
+  removeAt(kind, idx);
+}
+function onPointerUpAnywhere() {
+  state.dragging = false;
+  state.dragKind = null;
+}
+window.addEventListener('pointerup', onPointerUpAnywhere);
+window.addEventListener('pointercancel', onPointerUpAnywhere);
+
+// ===== 화면 갱신 =====
+function refresh() {
+  // 숫자 갱신 (현재 남은 양 = 빼지는 수의 현재 상태)
+  setText('num-m-h', state.remaining.h);
+  setText('num-m-m', state.remaining.m);
+  setText('num-m-s', state.remaining.s);
+
+  // 빼는 수: 아직 지워야 할 양
+  setText('num-s-h', state.toRemove.h);
+  setText('num-s-m', state.toRemove.m);
+  setText('num-s-s', state.toRemove.s);
+
+  // 시계 바늘
+  setHourHand(state.remaining.h);
+
+  // 시 동그라미
+  renderHourTicks();
+  // 분, 초
+  renderBundles('m');
+  renderBundles('s');
+}
+
+function checkDone() {
+  if (state.toRemove.h === 0 && state.toRemove.m === 0 && state.toRemove.s === 0) {
+    setMessage(`🎉 잘했어요! 빼기를 완성했어요!`, true);
+    $('answer').classList.add('show');
+    $('answer-text').textContent =
+      `${state.remaining.h}시 ${state.remaining.m}분 ${state.remaining.s}초`;
+    if (state.active) playSuccess();
+    state.active = false;
+  } else {
+    let parts = [];
+    if (state.toRemove.h > 0) parts.push(`<b style="color:var(--hour)">${state.toRemove.h}시</b>`);
+    if (state.toRemove.m > 0) parts.push(`<b style="color:var(--min)">${state.toRemove.m}분</b>`);
+    if (state.toRemove.s > 0) parts.push(`<b style="color:var(--sec)">${state.toRemove.s}초</b>`);
+    setMessage(`👉 ${parts.join(' ')} 만큼 더 지워볼까요?`);
+  }
+}
+
+// ===== 문제 시작 =====
+function startProblem() {
+  ensureAudio();
+  $('err').textContent = '';
+  $('answer').classList.remove('show');
+
+  const mh = parseInt($('m-h').value, 10);
+  const mm = parseInt($('m-m').value, 10);
+  const ms = parseInt($('m-s').value, 10);
+  const sh = parseInt($('s-h').value, 10);
+  const sm = parseInt($('s-m').value, 10);
+  const ss = parseInt($('s-s').value, 10);
+
+  // 검증
+  if ([mh, mm, ms, sh, sm, ss].some(v => isNaN(v))) {
+    $('err').textContent = '모든 칸에 숫자를 넣어주세요!';
+    return;
+  }
+  if (mh < 1 || mh > 12) { $('err').textContent = '시는 1~12 사이로 넣어주세요!'; return; }
+  if (mm < 0 || mm > 59 || ss < 0 || ss > 59 || sm < 0 || sm > 59 || ms < 0 || ms > 59) {
+    $('err').textContent = '분과 초는 0~59 사이로 넣어주세요!'; return;
+  }
+
+  // 받아내림 없는지 확인
+  if (sh > mh) { $('err').textContent = '⚠️ "시"에서 받아내림이 생겨요. 빼는 수의 시를 작게 해주세요.'; return; }
+  if (sm > mm) { $('err').textContent = '⚠️ "분"에서 받아내림이 생겨요. 빼는 수의 분을 작게 해주세요.'; return; }
+  if (ss > ms) { $('err').textContent = '⚠️ "초"에서 받아내림이 생겨요. 빼는 수의 초를 작게 해주세요.'; return; }
+
+  state.minuend = { h: mh, m: mm, s: ms };
+  state.subtrahend = { h: sh, m: sm, s: ss };
+  state.remaining = { h: mh, m: mm, s: ms };
+  state.toRemove = { h: sh, m: sm, s: ss };
+  // 점 상태 초기화 (모두 안 지워진 상태)
+  state.dots = {
+    h: new Array(mh).fill(false),
+    m: new Array(mm).fill(false),
+    s: new Array(ms).fill(false),
+  };
+  state.active = true;
+
+  drawClockFace();
+  refresh();
+
+  if (sh === 0 && sm === 0 && ss === 0) {
+    setMessage('빼는 수가 0이에요. 그대로가 답이 돼요!');
+  } else {
+    setMessage('💡 동그라미를 <b>클릭</b>하거나 <b>드래그</b>해서 지워봐요! ✏️');
+  }
+}
+
+// ===== 랜덤 문제 (받아내림 없음 보장) =====
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function randomProblem() {
+  ensureAudio(); // 사용자 클릭으로 오디오 활성화
+  // 받아내림이 없으려면: 빼지는 수의 각 자리 ≥ 빼는 수의 각 자리
+  // 빼지는 수 먼저 정하고, 그 안에서 빼는 수를 정한다
+  const mh = rand(2, 12);          // 시 (1보다 크게 해야 빼는 게 의미 있음)
+  const mm = rand(10, 59);         // 분 (너무 작으면 단조로워서 10 이상)
+  const ms = rand(10, 59);         // 초
+
+  // 빼는 수: 0 ~ 빼지는 수 사이에서 고르되, 너무 0뿐이면 재미없으니 약간 보정
+  const sh = rand(1, mh - 1);      // 최소 1시는 빼게 (mh가 2 이상이라 안전)
+  const sm = rand(0, mm);
+  const ss = rand(0, ms);
+
+  // 입력칸에 채우기
+  $('m-h').value = mh;
+  $('m-m').value = mm;
+  $('m-s').value = ms;
+  $('s-h').value = sh;
+  $('s-m').value = sm;
+  $('s-s').value = ss;
+
+  // 바로 시작
+  startProblem();
+}
+// ===== 자동으로 풀기 =====
+function autoSolve() {
+  if (!state.active) return;
+  ensureAudio();
+  const interval = setInterval(() => {
+    // 아직 안 지워진 첫 번째 점을 찾아 지움 (초→분→시 순서)
+    let kind = null;
+    if (state.toRemove.s > 0) kind = 's';
+    else if (state.toRemove.m > 0) kind = 'm';
+    else if (state.toRemove.h > 0) kind = 'h';
+
+    if (kind === null) {
+      clearInterval(interval);
+      return;
+    }
+    // 안 지워진 첫 번째 인덱스
+    let idx = state.dots[kind].findIndex(v => !v);
+    if (idx === -1) { clearInterval(interval); return; }
+    removeAt(kind, idx);
+    if (!state.active) clearInterval(interval);
+  }, 250);
+}
+
+// ===== 리셋 =====
+function resetProblem() {
+  state.active = false;
+  state.minuend = { h: 0, m: 0, s: 0 };
+  state.subtrahend = { h: 0, m: 0, s: 0 };
+  state.remaining = { h: 0, m: 0, s: 0 };
+  state.toRemove = { h: 0, m: 0, s: 0 };
+  state.dots = { h: [], m: [], s: [] };
+  state.dragging = false;
+  setText('num-m-h', 0); setText('num-m-m', 0); setText('num-m-s', 0);
+  setText('num-s-h', 0); setText('num-s-m', 0); setText('num-s-s', 0);
+  $('ticks-m-h').innerHTML = '';
+  $('bundles-m-m').innerHTML = '';
+  $('bundles-m-s').innerHTML = '';
+  $('answer').classList.remove('show');
+  $('err').textContent = '';
+  drawClockFace();
+  setMessage('문제를 입력하고 <b>"문제 시작!"</b> 버튼을 눌러보세요 😊');
+}
+
+// 초기 시계
+drawClockFace();
+</script>
+</body>
+</html>
