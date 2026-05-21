@@ -41,10 +41,11 @@
     margin-bottom: 24px;
   }
   h1 {
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 2.4rem;
+    font-family: 'Jua', sans-serif;
+    font-size: 2.2rem;
     color: var(--ink);
-    letter-spacing: 1px;
+    letter-spacing: 3px;
+    font-weight: 400;
   }
   .subtitle {
     font-family: 'Jua', sans-serif;
@@ -469,30 +470,30 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="main-title">⏰ 시간의 뺄셈 ⏰</h1>
-    <div class="subtitle" id="main-subtitle">받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)</div>
+    <h1 id="main-title">⏰ 시간의 덧셈과 뺄셈 ⏰</h1>
+    <div class="subtitle" id="main-subtitle">받아올림이 없는 시·분·초 더하기 (초등 3학년 1학기)</div>
   </header>
 
   <!-- 모드 전환 탭 -->
   <div class="mode-tabs">
-    <button class="mode-tab active" id="tab-sub" onclick="switchMode('sub')">➖ 시간의 뺄셈</button>
-    <button class="mode-tab" id="tab-add" onclick="switchMode('add')">➕ 시간의 덧셈</button>
+    <button class="mode-tab active" id="tab-add" onclick="switchMode('add')">➕ 시간의 덧셈</button>
+    <button class="mode-tab" id="tab-sub" onclick="switchMode('sub')">➖ 시간의 뺄셈</button>
   </div>
 
   <!-- 문제 입력 -->
   <section class="setup">
     <div class="setup-title">문제 만들기</div>
     <div class="input-row minuend">
-      <span class="label" id="label-a">빼지는 수</span>
-      <input type="number" id="m-h" min="1" max="12" value="8"><span class="unit">시</span>
-      <input type="number" id="m-m" min="0" max="59" value="45"><span class="unit">분</span>
-      <input type="number" id="m-s" min="0" max="59" value="30"><span class="unit">초</span>
+      <span class="label" id="label-a">더해지는 수</span>
+      <input type="number" id="m-h" min="1" max="12" value="3"><span class="unit">시</span>
+      <input type="number" id="m-m" min="0" max="59" value="20"><span class="unit">분</span>
+      <input type="number" id="m-s" min="0" max="59" value="15"><span class="unit">초</span>
     </div>
     <div class="input-row subtrahend">
-      <span class="label" id="label-b">빼는 수 −</span>
-      <input type="number" id="s-h" min="0" max="12" value="3"><span class="unit">시</span>
-      <input type="number" id="s-m" min="0" max="59" value="20"><span class="unit">분</span>
-      <input type="number" id="s-s" min="0" max="59" value="15"><span class="unit">초</span>
+      <span class="label" id="label-b">더하는 수 +</span>
+      <input type="number" id="s-h" min="0" max="12" value="4"><span class="unit">시</span>
+      <input type="number" id="s-m" min="0" max="59" value="25"><span class="unit">분</span>
+      <input type="number" id="s-s" min="0" max="59" value="14"><span class="unit">초</span>
     </div>
     <div class="btn-row">
       <button class="btn-start" onclick="startProblem()">🎯 문제 시작!</button>
@@ -513,7 +514,7 @@
       <div class="col-label sec">초</div>
 
       <!-- A: 빼지는 수 / 더해지는 수 -->
-      <div class="row-label" id="row-label-a">빼지는<br>수</div>
+      <div class="row-label" id="row-label-a">더해지는<br>수</div>
       <div class="cell hour" id="cell-m-h">
         <div class="cell-num" id="num-m-h">0</div>
         <div class="clock-wrap">
@@ -533,18 +534,18 @@
       </div>
 
       <!-- B: 빼는 수 / 더하는 수 -->
-      <div class="row-label" id="row-label-b">빼는<br>수 −</div>
+      <div class="row-label" id="row-label-b">더하는<br>수 +</div>
       <div class="cell hour">
         <div class="cell-num" id="num-s-h">0</div>
-        <div class="legend" id="legend-h">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-h">이만큼<br>채워요!</div>
       </div>
       <div class="cell min">
         <div class="cell-num" id="num-s-m">0</div>
-        <div class="legend" id="legend-m">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-m">이만큼<br>채워요!</div>
       </div>
       <div class="cell sec">
         <div class="cell-num" id="num-s-s">0</div>
-        <div class="legend" id="legend-s">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-s">이만큼<br>채워요!</div>
       </div>
     </div>
 
@@ -561,7 +562,7 @@
 <script>
 // ===== 상태 =====
 const state = {
-  mode: 'sub',                          // 'sub' (뺄셈) 또는 'add' (덧셈)
+  mode: 'add',                          // 'sub' (뺄셈) 또는 'add' (덧셈)
   a: { h: 0, m: 0, s: 0 },              // A: 빼지는 수 / 더해지는 수 (초기값)
   b: { h: 0, m: 0, s: 0 },              // B: 빼는 수 / 더하는 수 (목표만큼 처리할 양)
   current: { h: 0, m: 0, s: 0 },        // 현재 빼지는수에 표시되는 값(뺄셈: 줄어듦, 덧셈: 늘어남)
@@ -583,8 +584,7 @@ function switchMode(mode) {
   // 탭 활성화
   $('tab-sub').classList.toggle('active', isSub);
   $('tab-add').classList.toggle('active', !isSub);
-  // 제목/라벨 갱신
-  $('main-title').textContent = isSub ? '⏰ 시간의 뺄셈 ⏰' : '⏰ 시간의 덧셈 ⏰';
+  // 부제목만 모드에 맞게 갱신 (메인 제목은 고정)
   $('main-subtitle').textContent = isSub
     ? '받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)'
     : '받아올림이 없는 시·분·초 더하기 (초등 3학년 1학기)';
