@@ -136,6 +136,64 @@
     min-height: 1.4em;
   }
 
+  /* 모드 탭 */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .mode-tab {
+    flex: 1;
+    max-width: 300px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.3rem;
+    padding: 14px 20px;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    cursor: pointer;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+    transition: all 0.15s;
+  }
+  .mode-tab:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(45,49,66,0.2); }
+  .mode-tab.active {
+    background: var(--accent);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(45,49,66,0.15);
+  }
+
+  /* 덧셈 모드: 추가될 점은 점선으로 표시(클릭하면 채워짐) */
+  .dot.pending {
+    background: transparent !important;
+    border: 2px dashed var(--ink);
+    opacity: 0.55;
+    cursor: pointer;
+    animation: gentle-pulse 1.8s ease-in-out infinite;
+  }
+  .dot.pending:hover {
+    transform: scale(1.2);
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 0 5px rgba(45,49,66,0.3);
+  }
+  .hour-tick.pending {
+    background: transparent;
+    color: var(--ink);
+    border: 2px dashed var(--ink);
+    opacity: 0.55;
+    cursor: pointer;
+    animation: gentle-pulse 1.8s ease-in-out infinite;
+  }
+  .hour-tick.pending:hover {
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 0 5px rgba(45,49,66,0.3);
+  }
+  @keyframes gentle-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.85; }
+  }
+
   /* 작업 영역 */
   .workspace {
     background: var(--paper);
@@ -411,21 +469,27 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>⏰ 시간의 뺄셈 ⏰</h1>
-    <div class="subtitle">받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)</div>
+    <h1 id="main-title">⏰ 시간의 뺄셈 ⏰</h1>
+    <div class="subtitle" id="main-subtitle">받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)</div>
   </header>
+
+  <!-- 모드 전환 탭 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-sub" onclick="switchMode('sub')">➖ 시간의 뺄셈</button>
+    <button class="mode-tab" id="tab-add" onclick="switchMode('add')">➕ 시간의 덧셈</button>
+  </div>
 
   <!-- 문제 입력 -->
   <section class="setup">
     <div class="setup-title">문제 만들기</div>
     <div class="input-row minuend">
-      <span class="label">빼지는 수</span>
+      <span class="label" id="label-a">빼지는 수</span>
       <input type="number" id="m-h" min="1" max="12" value="8"><span class="unit">시</span>
       <input type="number" id="m-m" min="0" max="59" value="45"><span class="unit">분</span>
       <input type="number" id="m-s" min="0" max="59" value="30"><span class="unit">초</span>
     </div>
     <div class="input-row subtrahend">
-      <span class="label">빼는 수 −</span>
+      <span class="label" id="label-b">빼는 수 −</span>
       <input type="number" id="s-h" min="0" max="12" value="3"><span class="unit">시</span>
       <input type="number" id="s-m" min="0" max="59" value="20"><span class="unit">분</span>
       <input type="number" id="s-s" min="0" max="59" value="15"><span class="unit">초</span>
@@ -448,8 +512,8 @@
       <div class="col-label min">분</div>
       <div class="col-label sec">초</div>
 
-      <!-- 빼지는 수 -->
-      <div class="row-label">빼지는<br>수</div>
+      <!-- A: 빼지는 수 / 더해지는 수 -->
+      <div class="row-label" id="row-label-a">빼지는<br>수</div>
       <div class="cell hour" id="cell-m-h">
         <div class="cell-num" id="num-m-h">0</div>
         <div class="clock-wrap">
@@ -468,19 +532,19 @@
         <div class="bundles" id="bundles-m-s"></div>
       </div>
 
-      <!-- 빼는 수 -->
-      <div class="row-label">빼는<br>수 −</div>
+      <!-- B: 빼는 수 / 더하는 수 -->
+      <div class="row-label" id="row-label-b">빼는<br>수 −</div>
       <div class="cell hour">
         <div class="cell-num" id="num-s-h">0</div>
-        <div class="legend">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-h">이만큼<br>지워요!</div>
       </div>
       <div class="cell min">
         <div class="cell-num" id="num-s-m">0</div>
-        <div class="legend">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-m">이만큼<br>지워요!</div>
       </div>
       <div class="cell sec">
         <div class="cell-num" id="num-s-s">0</div>
-        <div class="legend">이만큼<br>지워요!</div>
+        <div class="legend" id="legend-s">이만큼<br>지워요!</div>
       </div>
     </div>
 
@@ -497,17 +561,52 @@
 <script>
 // ===== 상태 =====
 const state = {
-  minuend: { h: 0, m: 0, s: 0 },
-  subtrahend: { h: 0, m: 0, s: 0 },
-  remaining: { h: 0, m: 0, s: 0 },     // 남은 점/시계 개수
-  toRemove: { h: 0, m: 0, s: 0 },      // 더 지워야 하는 개수
-  // 각 점이 지워졌는지 추적 (true=지워짐). 인덱스 0..(total-1)
+  mode: 'sub',                          // 'sub' (뺄셈) 또는 'add' (덧셈)
+  a: { h: 0, m: 0, s: 0 },              // A: 빼지는 수 / 더해지는 수 (초기값)
+  b: { h: 0, m: 0, s: 0 },              // B: 빼는 수 / 더하는 수 (목표만큼 처리할 양)
+  current: { h: 0, m: 0, s: 0 },        // 현재 빼지는수에 표시되는 값(뺄셈: 줄어듦, 덧셈: 늘어남)
+  todo: { h: 0, m: 0, s: 0 },           // 앞으로 처리해야 할 양(지우기/추가하기)
+  // 각 점이 처리되었는지 추적 (뺄셈: 지워짐, 덧셈: 채워짐)
   dots: { h: [], m: [], s: [] },
+  // 덧셈 모드에서 총 점 개수 (빼지는수 + 빼는수)
+  totals: { h: 0, m: 0, s: 0 },
   active: false,
   // 드래그 상태
   dragging: false,
   dragKind: null,
 };
+
+// ===== 모드 전환 =====
+function switchMode(mode) {
+  state.mode = mode;
+  const isSub = (mode === 'sub');
+  // 탭 활성화
+  $('tab-sub').classList.toggle('active', isSub);
+  $('tab-add').classList.toggle('active', !isSub);
+  // 제목/라벨 갱신
+  $('main-title').textContent = isSub ? '⏰ 시간의 뺄셈 ⏰' : '⏰ 시간의 덧셈 ⏰';
+  $('main-subtitle').textContent = isSub
+    ? '받아내림이 없는 시·분·초 빼기 (초등 3학년 1학기)'
+    : '받아올림이 없는 시·분·초 더하기 (초등 3학년 1학기)';
+  $('label-a').textContent = isSub ? '빼지는 수' : '더해지는 수';
+  $('label-b').textContent = isSub ? '빼는 수 −' : '더하는 수 +';
+  $('row-label-a').innerHTML = isSub ? '빼지는<br>수' : '더해지는<br>수';
+  $('row-label-b').innerHTML = isSub ? '빼는<br>수 −' : '더하는<br>수 +';
+  const legendText = isSub ? '이만큼<br>지워요!' : '이만큼<br>채워요!';
+  $('legend-h').innerHTML = legendText;
+  $('legend-m').innerHTML = legendText;
+  $('legend-s').innerHTML = legendText;
+  // 기본값 (받아내림/받아올림 안 생기는 안전한 값)
+  if (isSub) {
+    $('m-h').value = 8; $('m-m').value = 45; $('m-s').value = 30;
+    $('s-h').value = 3; $('s-m').value = 20; $('s-s').value = 15;
+  } else {
+    $('m-h').value = 3; $('m-m').value = 20; $('m-s').value = 15;
+    $('s-h').value = 4; $('s-m').value = 25; $('s-s').value = 14;
+  }
+  // 초기화
+  resetProblem();
+}
 
 // ===== 딸깍 소리 (Web Audio API) =====
 let audioCtx = null;
@@ -607,18 +706,37 @@ function setHourHand(hour) {
 function renderHourTicks() {
   const cont = $('ticks-m-h');
   cont.innerHTML = '';
-  const total = state.minuend.h;
+  const isSub = (state.mode === 'sub');
+  const total = state.totals.h;
   for (let i = 0; i < total; i++) {
     const tick = document.createElement('div');
     tick.className = 'hour-tick';
     tick.textContent = i + 1;
-    if (state.dots.h[i]) {
-      tick.classList.add('removed');
-    } else if (state.toRemove.h > 0) {
-      tick.classList.add('removable');
-      tick.dataset.kind = 'h';
-      tick.dataset.index = i;
-      tick.addEventListener('click', () => removeAt('h', i));
+    if (isSub) {
+      // 뺄셈: 처리되면 사라진 표시
+      if (state.dots.h[i]) {
+        tick.classList.add('removed');
+      } else if (state.todo.h > 0) {
+        tick.classList.add('removable');
+        tick.dataset.kind = 'h';
+        tick.dataset.index = i;
+        tick.addEventListener('click', () => actAt('h', i));
+      }
+    } else {
+      // 덧셈: i < a.h는 이미 있는 것 (실선), 나머지는 pending(점선 → 클릭하면 채워짐)
+      if (i < state.a.h) {
+        // 이미 있는 시 (그대로 표시)
+      } else {
+        // 추가될 자리
+        if (state.dots.h[i]) {
+          // 이미 채워짐 (실선으로 표시 - 추가 클래스 없음)
+        } else {
+          tick.classList.add('pending');
+          tick.dataset.kind = 'h';
+          tick.dataset.index = i;
+          tick.addEventListener('click', () => actAt('h', i));
+        }
+      }
     }
     cont.appendChild(tick);
   }
@@ -631,7 +749,7 @@ function renderBundles(kind) {
   const cont = $(containerId);
   cont.innerHTML = '';
 
-  const total = kind === 'm' ? state.minuend.m : state.minuend.s;
+  const total = state.totals[kind];
   const fullBundles = Math.floor(total / 5);
   const leftover = total % 5;
 
@@ -663,30 +781,53 @@ function makeDot(kind, index) {
   dot.className = 'dot';
   dot.dataset.kind = kind;
   dot.dataset.index = index;
-  if (state.dots[kind][index]) {
-    dot.classList.add('removed');
-  } else {
-    // 지울 게 남아있을 때만 클릭 가능 (위치 무관)
-    if ((kind === 'm' && state.toRemove.m > 0) ||
-        (kind === 's' && state.toRemove.s > 0)) {
-      dot.classList.add('removable');
+  const isSub = (state.mode === 'sub');
+
+  if (isSub) {
+    // 뺄셈: 처리되면 지워진 표시 / 아직이면 클릭 가능
+    if (state.dots[kind][index]) {
+      dot.classList.add('removed');
+    } else {
+      if (state.todo[kind] > 0) {
+        dot.classList.add('removable');
+      }
+      dot.addEventListener('pointerdown', onDotPointerDown);
+      dot.addEventListener('pointerenter', onDotPointerEnter);
     }
-    // 드래그/클릭 이벤트는 항상 등록 (드래그 중에 진입하면 지우기 위해)
-    dot.addEventListener('pointerdown', onDotPointerDown);
-    dot.addEventListener('pointerenter', onDotPointerEnter);
+  } else {
+    // 덧셈: index < a[kind]는 이미 있는 점 (실선) / 그 이상은 채울 자리
+    if (index < state.a[kind]) {
+      // 이미 있음 - 그대로 채워진 모양
+    } else {
+      if (state.dots[kind][index]) {
+        // 채워짐 - 실선 모양 (별도 클래스 없음)
+      } else {
+        dot.classList.add('pending');
+        dot.addEventListener('pointerdown', onDotPointerDown);
+        dot.addEventListener('pointerenter', onDotPointerEnter);
+      }
+    }
   }
   return dot;
 }
 
-// ===== 점 지우기 (인덱스 기반) =====
-function removeAt(kind, index) {
+// ===== 점 처리 (뺄셈: 지우기 / 덧셈: 채우기) =====
+function actAt(kind, index) {
   if (!state.active) return;
-  if (state.dots[kind][index]) return; // 이미 지워짐
-  if (state.toRemove[kind] <= 0) return; // 더 지울 게 없음
+  if (state.dots[kind][index]) return; // 이미 처리됨
+  if (state.todo[kind] <= 0) return;   // 더 처리할 게 없음
+
+  const isSub = (state.mode === 'sub');
+  if (!isSub && index < state.a[kind]) return; // 덧셈: 이미 있는 점은 못 건드림
+
   playClick();
   state.dots[kind][index] = true;
-  state.remaining[kind] -= 1;
-  state.toRemove[kind] -= 1;
+  if (isSub) {
+    state.current[kind] -= 1;
+  } else {
+    state.current[kind] += 1;
+  }
+  state.todo[kind] -= 1;
   refresh();
   checkDone();
 }
@@ -699,17 +840,16 @@ function onDotPointerDown(e) {
   const idx = parseInt(e.currentTarget.dataset.index, 10);
   state.dragging = true;
   state.dragKind = kind;
-  // 포인터 캡처해서 화면 밖으로 나가도 up 이벤트를 받게
   try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
-  removeAt(kind, idx);
+  actAt(kind, idx);
 }
 function onDotPointerEnter(e) {
   if (!state.dragging) return;
   if (!state.active) return;
   const kind = e.currentTarget.dataset.kind;
-  if (kind !== state.dragKind) return; // 다른 종류로 넘어가지 않음
+  if (kind !== state.dragKind) return;
   const idx = parseInt(e.currentTarget.dataset.index, 10);
-  removeAt(kind, idx);
+  actAt(kind, idx);
 }
 function onPointerUpAnywhere() {
   state.dragging = false;
@@ -720,18 +860,18 @@ window.addEventListener('pointercancel', onPointerUpAnywhere);
 
 // ===== 화면 갱신 =====
 function refresh() {
-  // 숫자 갱신 (현재 남은 양 = 빼지는 수의 현재 상태)
-  setText('num-m-h', state.remaining.h);
-  setText('num-m-m', state.remaining.m);
-  setText('num-m-s', state.remaining.s);
+  // 숫자 갱신 (A의 현재 값 - 뺄셈은 줄고, 덧셈은 늘어남)
+  setText('num-m-h', state.current.h);
+  setText('num-m-m', state.current.m);
+  setText('num-m-s', state.current.s);
 
-  // 빼는 수: 아직 지워야 할 양
-  setText('num-s-h', state.toRemove.h);
-  setText('num-s-m', state.toRemove.m);
-  setText('num-s-s', state.toRemove.s);
+  // B의 남은 처리량
+  setText('num-s-h', state.todo.h);
+  setText('num-s-m', state.todo.m);
+  setText('num-s-s', state.todo.s);
 
-  // 시계 바늘
-  setHourHand(state.remaining.h);
+  // 시계 바늘 (현재 시)
+  setHourHand(state.current.h);
 
   // 시 동그라미
   renderHourTicks();
@@ -741,19 +881,21 @@ function refresh() {
 }
 
 function checkDone() {
-  if (state.toRemove.h === 0 && state.toRemove.m === 0 && state.toRemove.s === 0) {
-    setMessage(`🎉 잘했어요! 빼기를 완성했어요!`, true);
+  if (state.todo.h === 0 && state.todo.m === 0 && state.todo.s === 0) {
+    const word = (state.mode === 'sub') ? '빼기' : '더하기';
+    setMessage(`🎉 잘했어요! ${word}를 완성했어요!`, true);
     $('answer').classList.add('show');
     $('answer-text').textContent =
-      `${state.remaining.h}시 ${state.remaining.m}분 ${state.remaining.s}초`;
+      `${state.current.h}시 ${state.current.m}분 ${state.current.s}초`;
     if (state.active) playSuccess();
     state.active = false;
   } else {
     let parts = [];
-    if (state.toRemove.h > 0) parts.push(`<b style="color:var(--hour)">${state.toRemove.h}시</b>`);
-    if (state.toRemove.m > 0) parts.push(`<b style="color:var(--min)">${state.toRemove.m}분</b>`);
-    if (state.toRemove.s > 0) parts.push(`<b style="color:var(--sec)">${state.toRemove.s}초</b>`);
-    setMessage(`👉 ${parts.join(' ')} 만큼 더 지워볼까요?`);
+    if (state.todo.h > 0) parts.push(`<b style="color:var(--hour)">${state.todo.h}시</b>`);
+    if (state.todo.m > 0) parts.push(`<b style="color:var(--min)">${state.todo.m}분</b>`);
+    if (state.todo.s > 0) parts.push(`<b style="color:var(--sec)">${state.todo.s}초</b>`);
+    const verb = (state.mode === 'sub') ? '지워볼까요' : '채워볼까요';
+    setMessage(`👉 ${parts.join(' ')} 만큼 더 ${verb}?`);
   }
 }
 
@@ -775,25 +917,45 @@ function startProblem() {
     $('err').textContent = '모든 칸에 숫자를 넣어주세요!';
     return;
   }
-  if (mh < 1 || mh > 12) { $('err').textContent = '시는 1~12 사이로 넣어주세요!'; return; }
-  if (mm < 0 || mm > 59 || ss < 0 || ss > 59 || sm < 0 || sm > 59 || ms < 0 || ms > 59) {
-    $('err').textContent = '분과 초는 0~59 사이로 넣어주세요!'; return;
+  const isSub = (state.mode === 'sub');
+
+  if (isSub) {
+    if (mh < 1 || mh > 12) { $('err').textContent = '시는 1~12 사이로 넣어주세요!'; return; }
+    if (mm < 0 || mm > 59 || ss < 0 || ss > 59 || sm < 0 || sm > 59 || ms < 0 || ms > 59) {
+      $('err').textContent = '분과 초는 0~59 사이로 넣어주세요!'; return;
+    }
+    // 받아내림 검증
+    if (sh > mh) { $('err').textContent = '⚠️ "시"에서 받아내림이 생겨요. 빼는 수의 시를 작게 해주세요.'; return; }
+    if (sm > mm) { $('err').textContent = '⚠️ "분"에서 받아내림이 생겨요. 빼는 수의 분을 작게 해주세요.'; return; }
+    if (ss > ms) { $('err').textContent = '⚠️ "초"에서 받아내림이 생겨요. 빼는 수의 초를 작게 해주세요.'; return; }
+  } else {
+    // 덧셈: A는 1~11시, B는 0~11시 정도, 둘 다 0~59분/초
+    if (mh < 1 || mh > 12) { $('err').textContent = '더해지는 수의 시는 1~12 사이로 넣어주세요!'; return; }
+    if (sh < 0 || sh > 12) { $('err').textContent = '더하는 수의 시는 0~12 사이로 넣어주세요!'; return; }
+    if (mm < 0 || mm > 59 || ss < 0 || ss > 59 || sm < 0 || sm > 59 || ms < 0 || ms > 59) {
+      $('err').textContent = '분과 초는 0~59 사이로 넣어주세요!'; return;
+    }
+    // 받아올림 검증
+    if (mh + sh > 12) { $('err').textContent = '⚠️ "시"에서 받아올림이 생겨요. 두 시의 합이 12를 넘지 않게 해주세요.'; return; }
+    if (mm + sm > 59) { $('err').textContent = '⚠️ "분"에서 받아올림이 생겨요. 두 분의 합이 60을 넘지 않게 해주세요.'; return; }
+    if (ms + ss > 59) { $('err').textContent = '⚠️ "초"에서 받아올림이 생겨요. 두 초의 합이 60을 넘지 않게 해주세요.'; return; }
   }
 
-  // 받아내림 없는지 확인
-  if (sh > mh) { $('err').textContent = '⚠️ "시"에서 받아내림이 생겨요. 빼는 수의 시를 작게 해주세요.'; return; }
-  if (sm > mm) { $('err').textContent = '⚠️ "분"에서 받아내림이 생겨요. 빼는 수의 분을 작게 해주세요.'; return; }
-  if (ss > ms) { $('err').textContent = '⚠️ "초"에서 받아내림이 생겨요. 빼는 수의 초를 작게 해주세요.'; return; }
-
-  state.minuend = { h: mh, m: mm, s: ms };
-  state.subtrahend = { h: sh, m: sm, s: ss };
-  state.remaining = { h: mh, m: mm, s: ms };
-  state.toRemove = { h: sh, m: sm, s: ss };
-  // 점 상태 초기화 (모두 안 지워진 상태)
+  state.a = { h: mh, m: mm, s: ms };
+  state.b = { h: sh, m: sm, s: ss };
+  state.current = { h: mh, m: mm, s: ms };  // 시작은 A의 값
+  state.todo = { h: sh, m: sm, s: ss };     // 처리해야 할 양 = B
+  // 총 점 개수 (덧셈: A+B, 뺄셈: A)
+  if (isSub) {
+    state.totals = { h: mh, m: mm, s: ms };
+  } else {
+    state.totals = { h: mh + sh, m: mm + sm, s: ms + ss };
+  }
+  // 점 상태 초기화
   state.dots = {
-    h: new Array(mh).fill(false),
-    m: new Array(mm).fill(false),
-    s: new Array(ms).fill(false),
+    h: new Array(state.totals.h).fill(false),
+    m: new Array(state.totals.m).fill(false),
+    s: new Array(state.totals.s).fill(false),
   };
   state.active = true;
 
@@ -801,28 +963,42 @@ function startProblem() {
   refresh();
 
   if (sh === 0 && sm === 0 && ss === 0) {
-    setMessage('빼는 수가 0이에요. 그대로가 답이 돼요!');
+    const word = isSub ? '빼는' : '더하는';
+    setMessage(`${word} 수가 0이에요. 그대로가 답이 돼요!`);
   } else {
-    setMessage('💡 동그라미를 <b>클릭</b>하거나 <b>드래그</b>해서 지워봐요! ✏️');
+    const verb = isSub ? '지워봐요' : '채워봐요';
+    setMessage(`💡 동그라미를 <b>클릭</b>하거나 <b>드래그</b>해서 ${verb}! ✏️`);
   }
 }
 
-// ===== 랜덤 문제 (받아내림 없음 보장) =====
+// ===== 랜덤 문제 (받아내림/받아올림 없음 보장) =====
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 function randomProblem() {
-  ensureAudio(); // 사용자 클릭으로 오디오 활성화
-  // 받아내림이 없으려면: 빼지는 수의 각 자리 ≥ 빼는 수의 각 자리
-  // 빼지는 수 먼저 정하고, 그 안에서 빼는 수를 정한다
-  const mh = rand(2, 12);          // 시 (1보다 크게 해야 빼는 게 의미 있음)
-  const mm = rand(10, 59);         // 분 (너무 작으면 단조로워서 10 이상)
-  const ms = rand(10, 59);         // 초
+  ensureAudio();
+  let mh, mm, ms, sh, sm, ss;
 
-  // 빼는 수: 0 ~ 빼지는 수 사이에서 고르되, 너무 0뿐이면 재미없으니 약간 보정
-  const sh = rand(1, mh - 1);      // 최소 1시는 빼게 (mh가 2 이상이라 안전)
-  const sm = rand(0, mm);
-  const ss = rand(0, ms);
+  if (state.mode === 'sub') {
+    // 뺄셈: 각 자리마다 빼지는수 >= 빼는수
+    mh = rand(2, 12);
+    mm = rand(10, 59);
+    ms = rand(10, 59);
+    sh = rand(1, mh - 1);
+    sm = rand(0, mm);
+    ss = rand(0, ms);
+  } else {
+    // 덧셈: 각 자리마다 두 수의 합이 한도 이내
+    // 시: 합 ≤ 12 (1시 + 1시 ~ 11시 + 1시 등)
+    mh = rand(1, 10);
+    sh = rand(1, 12 - mh);
+    // 분: 합 ≤ 59
+    mm = rand(5, 50);
+    sm = rand(1, 59 - mm);
+    // 초: 합 ≤ 59
+    ms = rand(5, 50);
+    ss = rand(1, 59 - ms);
+  }
 
   // 입력칸에 채우기
   $('m-h').value = mh;
@@ -832,28 +1008,37 @@ function randomProblem() {
   $('s-m').value = sm;
   $('s-s').value = ss;
 
-  // 바로 시작
   startProblem();
 }
 // ===== 자동으로 풀기 =====
 function autoSolve() {
   if (!state.active) return;
   ensureAudio();
+  const isSub = (state.mode === 'sub');
   const interval = setInterval(() => {
-    // 아직 안 지워진 첫 번째 점을 찾아 지움 (초→분→시 순서)
+    // 우선순위: 초 → 분 → 시
     let kind = null;
-    if (state.toRemove.s > 0) kind = 's';
-    else if (state.toRemove.m > 0) kind = 'm';
-    else if (state.toRemove.h > 0) kind = 'h';
+    if (state.todo.s > 0) kind = 's';
+    else if (state.todo.m > 0) kind = 'm';
+    else if (state.todo.h > 0) kind = 'h';
 
     if (kind === null) {
       clearInterval(interval);
       return;
     }
-    // 안 지워진 첫 번째 인덱스
-    let idx = state.dots[kind].findIndex(v => !v);
+    // 처리할 점의 인덱스 찾기
+    let idx = -1;
+    if (isSub) {
+      // 안 지워진 첫 번째 점
+      idx = state.dots[kind].findIndex(v => !v);
+    } else {
+      // 덧셈: A 다음(인덱스 a[kind])부터 처리, 아직 안 채워진 첫 번째
+      for (let i = state.a[kind]; i < state.totals[kind]; i++) {
+        if (!state.dots[kind][i]) { idx = i; break; }
+      }
+    }
     if (idx === -1) { clearInterval(interval); return; }
-    removeAt(kind, idx);
+    actAt(kind, idx);
     if (!state.active) clearInterval(interval);
   }, 250);
 }
@@ -861,10 +1046,11 @@ function autoSolve() {
 // ===== 리셋 =====
 function resetProblem() {
   state.active = false;
-  state.minuend = { h: 0, m: 0, s: 0 };
-  state.subtrahend = { h: 0, m: 0, s: 0 };
-  state.remaining = { h: 0, m: 0, s: 0 };
-  state.toRemove = { h: 0, m: 0, s: 0 };
+  state.a = { h: 0, m: 0, s: 0 };
+  state.b = { h: 0, m: 0, s: 0 };
+  state.current = { h: 0, m: 0, s: 0 };
+  state.todo = { h: 0, m: 0, s: 0 };
+  state.totals = { h: 0, m: 0, s: 0 };
   state.dots = { h: [], m: [], s: [] };
   state.dragging = false;
   setText('num-m-h', 0); setText('num-m-m', 0); setText('num-m-s', 0);
